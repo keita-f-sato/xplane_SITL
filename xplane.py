@@ -17,18 +17,20 @@ try:
 except pygame.error:
     print ('Joystickが見つかりませんでした。')
 
-
+#xplane送信フォーマット用リスト
 first_DATA = [68, 65, 84, 65, 0, 11, 0, 0, 0]
 filght_con_DATA = [0, 192, 121, 196, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 throttle_con1_DATA = [25, 0, 0, 0]
 throttle_con2_DATA = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 host = '127.0.0.1'
 port = 49007
 sedport = 49000
 bufsize = 1024
-DATA_Xplane = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-DATA_Xplane2 = []
+DATA_Xplane = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\
+               0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]#初期データ
+DATA_Xplane_buffer = []
 Auto_comand_bin = []
 ip_sp = 0
 delta_A = np.asarray([0,0,0,0])
@@ -39,48 +41,36 @@ def read_xplane_DATA():
   with closing(sock):
     sock.bind((host, port))
     while True:
-      adder = sock.recv(bufsize)
-      DATA10 = [int(adder[i]) for i in range(5,len(adder))]
+      recive_row_xplane_data = sock.recv(bufsize)
+      DATA10 = [int(recive_row_xplane_data[i]) for i in range(5,len(recive_row_xplane_data))]
       DATA1 =  [bin(DATA10[ii]).zfill(8) for ii in range(0,len(DATA10))]
-      DATA2 = DATA1[::-1]
+      Flip_bin_DATA = DATA1[::-1]
       DATA_Xplane = []
-      DATA_Xplane2 = []
-      DATA22 = []
-      Dn = int(len(DATA2) / 4)
+      DATA_Xplane_buffer = []
+      Flip_bin_DATA2 = []
+      Dn = int(len(Flip_bin_DATA) / 4)
       for c in range(0,Dn):
           c = 4*c
           cA =''
           for ci in range(0,4):
-              if len(DATA2[c+ci]) == 8:
-                  DATA28 = DATA2[c+ci].replace('b', '0')
-              elif len(DATA2[c+ci]) == 9:
-                   DATA28 = DATA2[c+ci].replace('b', '')
-              elif len(DATA2[c+ci]) == 10:
-                   DATA28 = DATA2[c+ci].replace('0b', '')
-              cA += DATA28
+              if len(Flip_bin_DATA[c+ci]) == 8:
+                  Flip_bin_DATA8 = Flip_bin_DATA[c+ci].replace('b', '0')
+              elif len(Flip_bin_DATA[c+ci]) == 9:
+                   Flip_bin_DATA8 = Flip_bin_DATA[c+ci].replace('b', '')
+              elif len(Flip_bin_DATA[c+ci]) == 10:
+                   Flip_bin_DATA8 = Flip_bin_DATA[c+ci].replace('0b', '')
+              cA += Flip_bin_DATA8
           cA = str(cA)
 
+          #IEEE754の計算
           c_sign = -2*int(cA[0])+1      #符号計算
           c_index = int(cA[1:9],2)-127    #指数計算
           c_mantissa = [float(cA[i3+8])*(2 ** (-i3)) for i3 in range(1,23)]    #仮数計算
           c_Decimal = 1 + sum(c_mantissa)    #少数計算
           Vaue = c_sign * float(c_Decimal)*2**c_index   #値計算
           Vaue = "%.3f" % Vaue
-          DATA_Xplane2.append(Vaue)
-          DATA_Xplane = DATA_Xplane2
-
-      #print(DATA_Xplane)
-
-
-      #print('A'+str(len(adder)))
-
-
-      #print(Auto_comand)
-      #print('B'+str(len(DATA10)))
-      #print('C'+str(len(DATA_Xplane)))
-
-
-      #print(DATA_Xplane)
+          DATA_Xplane_buffer.append(Vaue)
+          DATA_Xplane = DATA_Xplane_buffer
 
   return
 
@@ -169,7 +159,7 @@ def convert_bin2bytes(bin2data):
     byn_data =[int(bin_cov_data[25:],2) , int(bin_cov_data[17:24],2) , int(bin_cov_data[9:16],2) , int(bin_cov_data[0:8],2)]
     return byn_data
 
-def Dff (delta_a):
+def Dff (delta_a):#微分関数
     global delta_A
     delta_a_D = delta_a - delta_A
     delta_A = np.asarray(delta_a)
