@@ -69,14 +69,6 @@ def transfer_fuction(xplane2dec,control_DATA,delta_B) :
     rates = np.matrix([q,p,r])
     rate_err = rates_sp - rates
     att_control = k_p*rate_err + k_D * delta_b
-    
-
-
-
-
-
-
-
 
 
 

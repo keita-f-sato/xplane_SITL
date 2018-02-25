@@ -11,7 +11,7 @@ def float_dec2bin(n):
     return (('1' if neg else '0') + bn.strip('0') + hx[p:p+2]
             + bin(int(hx[p+2:]))[2:])
 
-def convert_IEEE2dec(Flip_bin_DATA):
+def IEEE2dec(Flip_bin_DATA):
     DATA_Xplane_dec = []
     Dn = int(len(Flip_bin_DATA) / 4)
     for c in range(0,Dn):
@@ -37,7 +37,7 @@ def convert_IEEE2dec(Flip_bin_DATA):
         DATA_Xplane_dec.append(Vaue)
     return(DATA_Xplane_dec)
 
-def convert_Dec2bin(bin2data):#10進数をFloat２進数に変換
+def Dec2bin(bin2data):#10進数をFloat２進数に変換
     bin_data = float_dec2bin(bin2data)
     pt = bin_data.index('p')
     dt = bin_data.index('.')
@@ -48,7 +48,7 @@ def convert_Dec2bin(bin2data):#10進数をFloat２進数に変換
     l_bin_p=len(p_bin_data)
 
     if l_bin_p < 8 :
-            p_bin_data = p_bin_data.zfill(8)
+         p_bin_data = p_bin_data.zfill(8)
     elif l_bin_p > 8 :
          p_bin_data = p_bin_data[0:7]
 
