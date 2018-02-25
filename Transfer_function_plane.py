@@ -27,8 +27,8 @@ def transfer_fuction(xplane2dec,control_DATA,delta_B):
     v = float(xplane2dec[12]) + buffer_a #y acxis speed
     w = float(xplane2dec[11]) + buffer_a #z acxis speed
     p = float(xplane2dec[51]) + buffer_a #roll moment
-    q = float(xplane2dec[52]) + buffer_a #roll moment
-    r = float(xplane2dec[50]) + buffer_a #roll moment
+    q = float(xplane2dec[52]) + buffer_a #pitch moment
+    r = float(xplane2dec[50]) + buffer_a #yaw moment
     h = float(xplane2dec[23]) + buffer_a  #altitude
 
 
