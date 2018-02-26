@@ -1,3 +1,5 @@
+
+
 import socket
 from contextlib import closing
 import numpy as np
@@ -8,6 +10,7 @@ import Convert_format
 import Transfer_function_plane
 import sys
 import pandas as pd
+from scipy.integrate import quad
 
 pygame.joystick.init()
 try:
@@ -32,16 +35,17 @@ class TF_Simulator:
         self.DATA_Xplane = [0]*72#初期データ
         self.Auto_comand_bin = []
         self.ip_sp = 0
-        self.delta_A = np.asarray([0,0,0,0])
+        self.delta_x-h = np.asarray([0,0,0,0])
         self.delta_baffer = np.asarray([0,0,0,0])#微分計算用バッファ
         self.stop_program = False
-        self.output_data_name = ['roll','pitch','yaw',\
+        self.output_data_name = ['roll','pitch','yaw','craft airspeed',\
                                  'vX','vY','vZ',\
                                  'roll moment','pitch moment','yaw moment',\
-                                 'con ailrn','con elev','con ruddr',\
+                                 'con ailrn','con elev','con ruddr','con throttle',\
                                  'lat','lon','alt',\
-                                 'mag_comp','craft airspeed','con throttle']
+                                 'mag_comp','control_status']
         self.save_xplane_data = pd.DataFrame([], columns = self.output_data_name)
+        self.control_status = 'hand control'
 
     def read_xplane_DATA(self):
       with closing(self.sock):
@@ -54,13 +58,14 @@ class TF_Simulator:
           Flip_bin_DATA = recive_xplane_data_bin[::-1]
 
           self.DATA_Xplane = Convert_format.IEEE2dec(Flip_bin_DATA)
-          self.save_xplane_data = self.save_xplane_data.append(pd.DataFrame([[self.DATA_Xplane[42] , self.DATA_Xplane[43] , self.DATA_Xplane[41],\
+          self.save_xplane_data = self.save_xplane_data.append(pd.DataFrame([[self.DATA_Xplane[42] , self.DATA_Xplane[43] , self.DATA_Xplane[41],self.DATA_Xplane[77],\
                                                                 self.DATA_Xplane[13] , self.DATA_Xplane[12] , self.DATA_Xplane[11],\
                                                                 self.DATA_Xplane[51] , self.DATA_Xplane[52] , self.DATA_Xplane[50],\
-                                                                self.DATA_Xplane[60] , self.DATA_Xplane[61] , self.DATA_Xplane[59],\
+                                                                self.DATA_Xplane[60] , self.DATA_Xplane[61] , self.DATA_Xplane[59],self.DATA_Xplane[7],\
                                                                 self.DATA_Xplane[25] , self.DATA_Xplane[24] , self.DATA_Xplane[22],\
-                                                                self.DATA_Xplane[34] , self.DATA_Xplane[77] , self.DATA_Xplane[7]]],\
+                                                                self.DATA_Xplane[34] , self.control_status]],\
                                                                 columns = self.output_data_name) , ignore_index=True)
+        self.delta_baffer = np.asarray([self.DATA_Xplane[42] , self.DATA_Xplane[43] , self.DATA_Xplane[41],self.DATA_Xplane[22]])
 
       return
 
@@ -85,13 +90,14 @@ class TF_Simulator:
                         self.stop_program = True
 
             if TF_start_switch & 1:#joystickのコマンドをXplaneにスルー出力
+                self.control_status = 'hand control'
                 control_comand_bin = [Convert_format.Dec2bin(filcon_DATA[i4]) for i4 in range(0,4)]
                 self.send_xplane_DATA(control_comand_bin)
 
             else:#Auto制御を実施
-                D_delta_a = self.Dff(self.delta_baffer)#微分値計算
-                Auto_comand_dec = Transfer_function_plane.transfer_fuction(self.DATA_Xplane,filcon_DATA,D_delta_a)#制御コマンドの計算
-                self.delta_baffer = Auto_comand_dec
+                self.control_status = 'PID control'
+                delta = self.Diff(self.delta_baffer)#微分値計算
+                Auto_comand_dec = Transfer_function_plane.transfer_fuction(self.DATA_Xplane,filcon_DATA,delta)#制御コマンドの計算
                 self.Auto_comand_bin = [Convert_format.Dec2bin(Auto_comand_dec[i4]) for i4 in range(0,4)]
                 print(Auto_comand_dec)
 
@@ -106,10 +112,10 @@ class TF_Simulator:
     def write_flight_csv(self,flight_data):
         flight_data.to_csv("xplane_Flight_data.csv")
 
-    def Dff (self,delta_a):#微分関数
-        delta_a_D = delta_a - self.delta_A
-        self.delta_A = np.asarray(delta_a)
-        return delta_a_D
+    def Diff (self,delta_a):#微分関数
+        delta = delta_a - self.delta_x-h
+        self.delta_x-h = np.asarray(delta_a)
+        return delta
 
 
 if __name__ == '__main__':
