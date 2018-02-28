@@ -2,20 +2,41 @@
 
 
 import numpy as np
-import math
+from scipy.integrate import simps
 
-def transfer_fuction(xplane2dec,control_DATA,delta_B):
+def transfer_fuction(xplane2dec,control_DATA,flight_data_for_integrate):
     Phi_sp = control_DATA[1]*180
     Theta_sp = control_DATA[0]*180
     Psi_sp = control_DATA[2]*180
     h_sp = 200 + 400*control_DATA[3]-200
+    sp_array = np.asarray([Phi_sp,Theta_sp,Psi_sp,h_sp])
     T_roll = 1
     T_pitch = 1
     g = 9.8 #m/s**2
-    K_i = np.asarray([1, 1, 1, 1])
-    K_p = np.asarray([0.2, 0.5, 1e-10, 0.2])
+    K_i = np.asarray([0.001, 0.001, 0.001, 0.01])
+    K_p = np.asarray([2, 5, 1e-10, 0.2])
     K_ff = np.asarray([0.3, 0.5, 0.5, 0.5])
     buffer_a = 1e-10
+
+    #print(flight_data_for_integrate)
+
+    flight_data_for_integrate = flight_data_for_integrate.as_matrix()
+    difference_flight_data = sp_array - flight_data_for_integrate[:,0:4]
+    flight_time =  flight_data_for_integrate[:,4]
+
+    integrate_roll = simps(difference_flight_data[:,0])
+    integrate_pitch = simps(difference_flight_data[:,1])
+    integrate_yaw = simps(difference_flight_data[:,2])
+    integrate_alt = simps(difference_flight_data[:,3])
+    integrate_array = np.asarray([integrate_roll,integrate_pitch,integrate_yaw])
+
+
+    diff_roll = np.diff(flight_data_for_integrate[:,0])
+    diff_pitch = np.diff(flight_data_for_integrate[:,1])
+    diff_yaw = np.diff(flight_data_for_integrate[:,2])
+    diff_alt = np.diff(flight_data_for_integrate[:,3])
+    diff_array = np.asarray([diff_roll[len(diff_roll)-1] , diff_pitch[len(diff_roll)-1] , diff_yaw[len(diff_roll)-1]])
+
 
 
 
@@ -41,14 +62,14 @@ def transfer_fuction(xplane2dec,control_DATA,delta_B):
 #control roll
     #delta_a = ((p_sp - r_sp - p * np.sin(Theta)) * K_p[0] )
     #delta_a = ((p_sp - r_sp * np.sin(Theta)) * (K_p[0]-p + ((K_i[0]-p))))
-    delta_a = p_sp * K_p[0] + delta_B[0]*K_ff[0]
+    delta_a = p_sp * K_p[0] + diff_array[0]*K_ff[0] + integrate_roll*K_i[0]
     delta_e = control_DATA[0]
-    #delta_e = q_sp * K_p[1] + delta_B[1]*K_ff[1]
+    #delta_e = q_sp * K_p[1] + diff_array[1]*K_ff[1]
     delta_r = control_DATA[2]
-    #delta_r = q_sp * K_p[2] + delta_B[2]*K_ff[2]
-    delta_th = control_DATA[3]#t_sp * K_p[3] + delta_B[3]*K_ff[3]
+    #delta_r = q_sp * K_p[2] + diff_array[2]*K_ff[2]
+    delta_th = control_DATA[3]#t_sp * K_p[3] + diff_array[3]*K_ff[3]
 
-    delta = [delta_e, delta_a, delta_r, delta_th]
+    #delta = [delta_e, delta_a, delta_r, delta_th]
 
 
     R = create_state_array(Phi,Theta,Psi)
@@ -68,6 +89,7 @@ def transfer_fuction(xplane2dec,control_DATA,delta_B):
     angle = np.arctan(tan)
     axis = np.matrix(e_R) / sin
     e_R = axis * angle
+
 
 
     cp1 =np.asarray([0 , 0 , axis[0,1] ])
@@ -100,9 +122,10 @@ def transfer_fuction(xplane2dec,control_DATA,delta_B):
     rates_sp = [e_R[0,0]*eP[0,0],e_R[0,1]*eP[0,1],e_R[0,2]*eP[0,2]]
     rates = np.matrix([q,p,r])
     rate_err = rates_sp - rates
-    att_control = K_p[0:3]*np.asarray(rate_err) + K_ff[0:3] * delta_B[0:3]
+    att_control = K_p[0:3]*np.asarray(rate_err) + K_ff[0:3] * diff_array[0:3] # + integrate_array * K_i[0:3]"""
+
     delta = [att_control[0,0],att_control[0,1],att_control[0,2], delta_th]
-    #print(delta)
+    #print(e_R)
 
     #delta_2 = delta_a - float(att_control[0,1])
     #print(delta_2)

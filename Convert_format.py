@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 hex2bin = dict('{:x} {:04b}'.format(x,x).split() for x in range(16))
 
 def float_dec2bin(n):
@@ -33,7 +34,7 @@ def IEEE2dec(Flip_bin_DATA):
         c_mantissa = [float(cA[i3+8])*(2 ** (-i3)) for i3 in range(1,23)]    #仮数計算
         c_Decimal = 1 + sum(c_mantissa)    #少数計算
         Vaue = c_sign * float(c_Decimal)*2**c_index   #値計算
-        Vaue = "%.3f" % Vaue
+        #Vaue = "%.6f" % Vaue
         DATA_Xplane_dec.append(Vaue)
     return(DATA_Xplane_dec)
 
