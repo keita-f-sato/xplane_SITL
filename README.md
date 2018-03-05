@@ -9,17 +9,10 @@ X-Plane_SITLはUDP通信を用いてX-Planeとデータの送受信を行い、�
 ##Quick Start
 X-Plane_SITLで制御アルゴリズムのテストを行う前にX-Plane本体を以下の画像のように設定する必要があります。
 
-X-plane_SITLの使用を開始するためには、以下の項目をソースコードを自分の環境に合わせて書き換えてください。
-
 1.setting of UDP
 X-Plane side
+![net](https://user-images.githubusercontent.com/32607565/36968673-99d49780-20a6-11e8-943a-19196154769c.PNG)
 
-X-Plane_SITL side
-'''Python:TF_Simulator.py
-    self.host = '127.0.0.1'
-    self.port = 49007
-    self.sedport = 49000
-'''
 
 2.Data output,input 
 ![data](https://user-images.githubusercontent.com/32607565/36968671-98a258e8-20a6-11e8-9670-1ddb3223daa5.PNG)
