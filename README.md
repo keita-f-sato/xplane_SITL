@@ -1,9 +1,23 @@
 # X-Plane_SITL
 This program is an open source program for control algorithms test of AutoPilot use by the commercial flight simulator software X-Plane.
 
-このプログラムは商用飛行シミュレータソフトX-Planeを用いてオートパイロットの制御アルゴリズムをテストするためのオープンソースプログラムです。
-X-Plane_SITLではPythonによって制御アルゴリズムを記述することができます。
-X-Plane_SITLはUDP通信を用いてX-Planeとデータの送受信を行い、航空機を制御し、シミュレートされた航空機の状態を受け取ることができます。
+このプログラムは商用飛行シミュレータソフトX-Planeを用いてオートパイロットの制御アルゴリズムをテストするためのオープンソースプログラムです。  
+X-Plane_SITLではPythonによって制御アルゴリズムを記述することができます。  
+X-Plane_SITLはUDP通信を用いてX-Planeとデータの送受信を行い、航空機を制御し、シミュレートされた航空機の状態を受け取ることができます。  
+
+## Why use Python
+このプログラムはPythonによって記述され、また制御アルゴリズムはPythonによって記述することができます。  
+なぜPythonなのか。そう思う人は多いでしょう。名だたるオープンソースDroneプロジェクトはC++で記述されています。しかも、C＋＋に比べ動作速度に劣るPythonは飛行制御には向かないことでしょう。  
+しかし、Pythonにも利点があります、それは簡易であるからです。
+このプログラムは制御アルゴリズムテストを簡易に行うことだけが目的ではありません。
+プログラムまたは、Drone初学習者にとっての学習ツールにもなりえると考えています。
+このツールを使用して単純なPID制御を書くだけでも、初学習者であるあなたに多くの気づきを与えてくれると信じています。  
+なので、Pythonを使用します。なぜならPythonはシンプルなプログラミング言語である、ただそれに尽きるからです。
+
+もし、あなたのパソコンにPythonが入っていないのならば「Anaconda」をインストールすることを推奨します。  
+Anacondaはパッケージ管理ツールが同梱されたPythonツールであり、煩わしいインストール作業を減らしてくれることでしょう。
+Pythonのバージョンは3.6です。
+<https://www.anaconda.com/download/>
 
 
 ## Quick Start
