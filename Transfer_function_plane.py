@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-
+import pandas as pd
 import numpy as np
 from scipy.integrate import simps
 
@@ -8,17 +8,16 @@ def transfer_fuction(xplane2dec,control_DATA,flight_data_for_integrate):
     Phi_sp = control_DATA[1]*180
     Theta_sp = control_DATA[0]*180
     Psi_sp = control_DATA[2]*180
-    h_sp = 200 + 400*control_DATA[3]-200
+    h_sp = 300
     sp_array = np.asarray([Phi_sp,Theta_sp,Psi_sp,h_sp])
     T_roll = 1
     T_pitch = 1
     g = 9.8 #m/s**2
-    K_i = np.asarray([1e-5,1e-5, 1e-5, 1e-15])
-    K_p = np.asarray([0.4,0.01, 1e-10, 0.2])
-    K_ff = np.asarray([0.25, 0.5, 0.1, 0.5])
+    K_i = np.asarray([1e-5,1e-5, 1e-5, 1e-6])
+    K_p = np.asarray([0.4,0.01, 1e-10, 0.002])
+    K_ff = np.asarray([0.25, 0.5, 0.1, 0.08])
     buffer_a = 1e-10
 
-    #print(flight_data_for_integrate)
 
     flight_data_for_integrate = flight_data_for_integrate.as_matrix()
     difference_flight_data = sp_array - flight_data_for_integrate[:,0:4]
@@ -28,29 +27,27 @@ def transfer_fuction(xplane2dec,control_DATA,flight_data_for_integrate):
     integrate_pitch = simps(difference_flight_data[:,1])
     integrate_yaw = simps(difference_flight_data[:,2])
     integrate_alt = simps(difference_flight_data[:,3])
-    integrate_array = np.asarray([integrate_roll,integrate_pitch,integrate_yaw])
-
 
     diff_roll = np.diff(flight_data_for_integrate[:,0])
     diff_pitch = np.diff(flight_data_for_integrate[:,1])
     diff_yaw = np.diff(flight_data_for_integrate[:,2])
     diff_alt = np.diff(flight_data_for_integrate[:,3])
-    diff_array = np.asarray([diff_roll[len(diff_roll)-1] , diff_pitch[len(diff_roll)-1] , diff_yaw[len(diff_roll)-1]])
+    diff_array = np.asarray([diff_roll[len(diff_roll)-1] , diff_pitch[len(diff_roll)-1] , diff_yaw[len(diff_roll)-1] , diff_alt[len(diff_roll)-1]])
 
 
 
 
 
-    Phi = float(xplane2dec[42]) + buffer_a    # roll
-    Theta = float(xplane2dec[43]) + buffer_a  #pitch
-    Psi = float(xplane2dec[41]) + buffer_a    #yaw
-    u = float(xplane2dec[13]) + buffer_a #x acxis speed
-    v = float(xplane2dec[12]) + buffer_a #y acxis speed
-    w = float(xplane2dec[11]) + buffer_a #z acxis speed
-    p = float(xplane2dec[51]) + buffer_a #roll moment
-    q = float(xplane2dec[52]) + buffer_a #pitch moment
-    r = float(xplane2dec[50]) + buffer_a #yaw moment
-    h = float(xplane2dec[23]) + buffer_a  #altitude
+    Phi = float(xplane2dec['roll']) + buffer_a    # roll
+    Theta = float(xplane2dec['pitch']) + buffer_a  #pitch
+    Psi = float(xplane2dec['hding_true']) + buffer_a    #yaw
+    u = float(xplane2dec['vX']) + buffer_a #x acxis speed
+    v = float(xplane2dec['vY']) + buffer_a #y acxis speed
+    w = float(xplane2dec['vZ']) + buffer_a #z acxis speed
+    p = float(xplane2dec['Q_rad/s']) + buffer_a #roll moment
+    q = float(xplane2dec['P_rad/s']) + buffer_a #pitch moment
+    r = float(xplane2dec['R_rad/s']) + buffer_a #yaw moment
+    h = float(xplane2dec['alt_ftagl']) + buffer_a  #altitude
 
 
 #moment sp
@@ -59,17 +56,16 @@ def transfer_fuction(xplane2dec,control_DATA,flight_data_for_integrate):
     r_sp = ((w*q_sp) + (g*np.sin(Phi)*np.cos(Theta)) + (u*q_sp*Phi))/((u*np.cos(Phi)*np.sin(Theta)) + (w*np.sin(Theta)))
     t_sp = h_sp -h
 
-#control roll
-    #delta_a = ((p_sp - r_sp - p * np.sin(Theta)) * K_p[0] )
-    #delta_a = ((p_sp - r_sp * np.sin(Theta)) * (K_p[0]-p + ((K_i[0]-p))))
+#control
     delta_a = p_sp * K_p[0] + diff_array[0]*K_ff[0]# + integrate_roll*K_i[0]
-    delta_e = q_sp * K_p[1] + diff_array[1]*K_ff[1]
-    #delta_e = q_sp * K_p[1] + diff_array[1]*K_ff[1]
+    delta_e = q_sp * K_p[1] + diff_array[1]*K_ff[1]# + ( t_sp * K_p[3] + diff_array[3] * K_ff[3] + integrate_alt*K_i[3])
     delta_r = control_DATA[2]
     #delta_r = q_sp * K_p[2] + diff_array[2]*K_ff[2]
     delta_th = control_DATA[3]#t_sp * K_p[3] + diff_array[3]*K_ff[3]
 
     delta = [delta_e, delta_a, delta_r, delta_th]
+    print(delta)
+
     return delta
 
 def convet_matrix_posture():
